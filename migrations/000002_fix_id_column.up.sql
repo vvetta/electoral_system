@@ -1,0 +1,8 @@
+CREATE SEQUENCE IF NOT EXISTS motos_id_seq START 1 INCREMENT 1;
+ALTER TABLE motos 
+    ALTER COLUMN id DROP DEFAULT,
+    ALTER COLUMN id TYPE BIGINT USING id::BIGINT,
+    ALTER COLUMN id SET DEFAULT nextval('motos_id_seq');
+SELECT setval('motos_id_seq', COALESCE((SELECT MAX(id) FROM motos), 0) + 1);
+
+

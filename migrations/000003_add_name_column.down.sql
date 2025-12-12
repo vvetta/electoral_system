@@ -1,0 +1,1 @@
+ALTER TABLE motos DROP COLUMN name;

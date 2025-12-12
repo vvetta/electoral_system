@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подбор мотоцикла - 5 шагов</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Иконки Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .footer {
+        display: flex;
+        position: relative;
+        flex-direction: column;
+        }
+        .step-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .step-card.active {
+            border-left: 5px solid #0d6efd;
+            transform: translateY(-5px);
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .step-indicator:before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: #e9ecef;
+            z-index: 1;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            width: 20%;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #6c757d;
+        }
+        
+        .step.active .step-number {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .step.completed .step-number {
+            background-color: #198754;
+            color: white;
+        }
+        
+        .step-title {
+            font-size: 0.85rem;
+            text-align: center;
+            color: #6c757d;
+        }
+        
+        .step.active .step-title {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        
+        .option-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .option-card:hover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        
+        .option-card.selected {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        
+        .btn-next, .btn-prev {
+            padding: 10px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .results-container {
+            display: none;
+        }
+        
+        .moto-card {
+            border: 1px solid #dee2e6;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .moto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .moto-card-header {
+            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+            color: white;
+            padding: 15px;
+        }
+        
+        .moto-card-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fffff;
+        }
+        
+        .moto-card-detail {
+            margin-bottom: 8px;
+        }
+        
+        .moto-card-detail i {
+            width: 20px;
+            color: #0d6efd;
+            margin-right: 10px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .step-title {
+                font-size: 0.75rem;
+            }
+            
+            .step-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold mb-3">Подбор мотоцикла</h1>
+                    <p class="lead text-muted">Ответьте на 5 простых вопросов и мы подберем для вас идеальный мотоцикл</p>
+                </div>
+                
+                <!-- Индикатор шагов -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-title">Тип мотоцикла</div>
+                    </div>
+                    <div class="step" id="step2-indicator">
+                        <div class="step-number">2</div>
+                        <div class="step-title">Объем двигателя</div>
+                    </div>
+                    <div class="step" id="step3-indicator">
+                        <div class="step-number">3</div>
+                        <div class="step-title">Бюджет</div>
+                    </div>
+                    <div class="step" id="step4-indicator">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Год выпуска</div>
+                    </div>
+                    <div class="step" id="step5-indicator">
+                        <div class="step-number">5</div>
+                        <div class="step-title">Пробег</div>
+                    </div>
+                </div>
+                
+                <!-- Форма выбора -->
+                <div id="selection-form">
+                    <!-- Шаг 1: Тип мотоцикла -->
+                    <div class="step-card active" id="step1">
+                        <h3 class="mb-4"><i class="bi bi-1-circle me-2"></i>Какой тип мотоцикла вы ищете?</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="Спорт-турист">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-speedometer2 fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Спорт-турист</h5>
+                                            <p class="text-muted mb-0">Для скорости и отдыха</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="Классик">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-geo-alt fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Классик</h5>
+                                            <p class="text-muted mb-0">Подходит для большинства</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="Эндуро">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-tree fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Эндуро</h5>
+                                            <p class="text-muted mb-0">Для бездорожья</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="Спорт">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-globe fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Спорт</h5>
+                                            <p class="text-muted mb-0">Для быстрых поездок</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="Чоппер">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-bicycle fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Чоппер</h5>
+                                            <p class="text-muted mb-0">Если хочется раздать стиля</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="-">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-question-circle fs-2 text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Любой тип</h5>
+                                            <p class="text-muted mb-0">Покажите все варианты</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-4">
+                            <button class="btn btn-primary btn-next" onclick="nextStep(2)">Далее <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Шаг 2: Объем двигателя -->
+                    <div class="step-card" id="step2" style="display: none;">
+                        <h3 class="mb-4"><i class="bi bi-2-circle me-2"></i>Какой объем двигателя вас интересует?</h3>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="1">
+                                    <div class="text-center">
+                                        <i class="bi bi-1-circle fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">до 250cc</h5>
+                                        <p class="text-muted mb-0">Для начинающих</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="2">
+                                    <div class="text-center">
+                                        <i class="bi bi-2-circle fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">250-500cc</h5>
+                                        <p class="text-muted mb-0">Средний класс</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="3">
+                                    <div class="text-center">
+                                        <i class="bi bi-3-circle fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">500-750cc</h5>
+                                        <p class="text-muted mb-0">Мощные мотоциклы</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="4">
+                                    <div class="text-center">
+                                        <i class="bi bi-4-circle fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">750-1000cc</h5>
+                                        <p class="text-muted mb-0">Высокая мощность</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="5">
+                                    <div class="text-center">
+                                        <i class="bi bi-5-circle fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">1000cc+</h5>
+                                        <p class="text-muted mb-0">Максимальная мощность</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-secondary btn-prev" onclick="prevStep(1)"><i class="bi bi-arrow-left me-2"></i> Назад</button>
+                            <button class="btn btn-primary btn-next" onclick="nextStep(3)">Далее <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Шаг 3: Бюджет -->
+                    <div class="step-card" id="step3" style="display: none;">
+                        <h3 class="mb-4"><i class="bi bi-3-circle me-2"></i>Какой у вас бюджет?</h3>
+                        <div class="mb-4">
+                            <label for="priceRange" class="form-label">Максимальная цена: <span id="priceValue">500 000</span> ₽</label>
+                            <input type="range" class="form-range" id="priceRange" min="50000" max="2000000" step="50000" value="500000">
+                            <div class="d-flex justify-content-between">
+                                <small>50 000 ₽</small>
+                                <small>2 000 000 ₽</small>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-3 mb-3">
+                                <div class="option-card price-option" data-value="200000">
+                                    <div class="text-center">
+                                        <h5 class="mb-1">до 200к</h5>
+                                        <p class="text-muted mb-0">Бюджетный</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="option-card price-option" data-value="500000">
+                                    <div class="text-center">
+                                        <h5 class="mb-1">до 500к</h5>
+                                        <p class="text-muted mb-0">Средний</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="option-card price-option" data-value="1000000">
+                                    <div class="text-center">
+                                        <h5 class="mb-1">до 1 млн</h5>
+                                        <p class="text-muted mb-0">Премиум</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="option-card price-option" data-value="2000000">
+                                    <div class="text-center">
+                                        <h5 class="mb-1">Любой</h5>
+                                        <p class="text-muted mb-0">Без ограничений</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-secondary btn-prev" onclick="prevStep(2)"><i class="bi bi-arrow-left me-2"></i> Назад</button>
+                            <button class="btn btn-primary btn-next" onclick="nextStep(4)">Далее <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Шаг 4: Год выпуска -->
+                    <div class="step-card" id="step4" style="display: none;">
+                        <h3 class="mb-4"><i class="bi bi-4-circle me-2"></i>Какой год выпуска предпочитаете?</h3>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="1">
+                                    <div class="text-center">
+                                        <i class="bi bi-calendar-check fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">2020+</h5>
+                                        <p class="text-muted mb-0">Новые модели</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="2">
+                                    <div class="text-center">
+                                        <i class="bi bi-calendar-minus fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">2015-2020</h5>
+                                        <p class="text-muted mb-0">Современные</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="3">
+                                    <div class="text-center">
+                                        <i class="bi bi-calendar fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">2010-2015</h5>
+                                        <p class="text-muted mb-0">С пробегом</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="4">
+                                    <div class="text-center">
+                                        <i class="bi bi-calendar-x fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">2000-2010</h5>
+                                        <p class="text-muted mb-0">Винтажные</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="5">
+                                    <div class="text-center">
+                                        <i class="bi bi-calendar-week fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">Любой год</h5>
+                                        <p class="text-muted mb-0">Не важно</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-secondary btn-prev" onclick="prevStep(3)"><i class="bi bi-arrow-left me-2"></i> Назад</button>
+                            <button class="btn btn-primary btn-next" onclick="nextStep(5)">Далее <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Шаг 5: Пробег -->
+                    <div class="step-card" id="step5" style="display: none;">
+                        <h3 class="mb-4"><i class="bi bi-5-circle me-2"></i>Какой пробег вас устроит?</h3>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="1">
+                                    <div class="text-center">
+                                        <i class="bi bi-speedometer fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">до 10к км</h5>
+                                        <p class="text-muted mb-0">Почти новый</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="2">
+                                    <div class="text-center">
+                                        <i class="bi bi-speedometer2 fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">10-30к км</h5>
+                                        <p class="text-muted mb-0">Маленький пробег</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="option-card" data-value="3">
+                                    <div class="text-center">
+                                        <i class="bi bi-tachometer fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">30-50к км</h5>
+                                        <p class="text-muted mb-0">Средний пробег</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="4">
+                                    <div class="text-center">
+                                        <i class="bi bi-tachometer fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">50-100к км</h5>
+                                        <p class="text-muted mb-0">Большой пробег</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="option-card" data-value="5">
+                                    <div class="text-center">
+                                        <i class="bi bi-infinity fs-1 text-primary mb-3"></i>
+                                        <h5 class="mb-1">Любой пробег</h5>
+                                        <p class="text-muted mb-0">Не имеет значения</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-secondary btn-prev" onclick="prevStep(4)"><i class="bi bi-arrow-left me-2"></i> Назад</button>
+                            <button class="btn btn-success btn-next" onclick="submitSelection()">Найти мотоциклы <i class="bi bi-search ms-2"></i></button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Спиннер загрузки -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <h4 class="mt-3">Ищем подходящие мотоциклы...</h4>
+                </div>
+                
+                <!-- Результаты -->
+                <div class="results-container" id="resultsContainer">
+                    <div class="step-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3><i class="bi bi-motorcycle me-2"></i>Результаты подбора</h3>
+                            <button class="btn btn-outline-primary" onclick="restartSelection()"><i class="bi bi-arrow-repeat me-2"></i>Новый подбор</button>
+                        </div>
+                        <div id="selectedParams" class="alert alert-info mb-4">
+                            <!-- Здесь будут отображаться выбранные параметры -->
+                        </div>
+                        <div id="motoResults">
+                            <!-- Здесь будут отображаться результаты -->
+                        </div>
+                        <div class="text-center mt-4">
+                            <p class="text-muted" id="resultsCount"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer">
+                  <span>Разработал: Коровин Никита Павлович</span>
+                  <span>Мотоциклы взяты с сайта (в количестве 478 шт.): <a href="https://mr-moto.ru">тык!</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Хранилище выбранных параметров
+        const selection = {
+            motoType: null,
+            engineSize: null,
+            maxPrice: 500000,
+            year: null,
+            mileage: null,
+
+            engine_size_option: null,
+            year_option: null,
+            mileage_option: null,
+            price_max: 500000,
+            moto_type: null,
+        };
+        
+        let currentStep = 1;
+        
+        // Инициализация выбора опций
+        function initOptionSelection() {
+            // Для всех карточек опций
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Убираем выделение у всех карточек в этом шаге
+                    const parentStep = this.closest('.step-card');
+                    parentStep.querySelectorAll('.option-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    
+                    // Выделяем выбранную карточку
+                    this.classList.add('selected');
+                    
+                    // Получаем значение
+                    const value = this.getAttribute('data-value');
+                    
+                    // Сохраняем в зависимости от текущего шага
+                    if (currentStep === 1) {
+                        selection.moto_type = value;
+                    } else if (currentStep === 2) {
+                        selection.engine_size_option = value;
+                    } else if (currentStep === 4) {
+                        selection.year_option = value;
+                    } else if (currentStep === 5) {
+                        selection.mileage_option = value;
+                    }
+                });
+            });
+            
+            // Для ценовых опций
+            document.querySelectorAll('.price-option').forEach(card => {
+                card.addEventListener('click', function() {
+                    const price = parseInt(this.getAttribute('data-value'));
+                    selection.price_max = price;
+                    document.getElementById('priceRange').value = price;
+                    updatePriceValue(price);
+                    
+                    // Убираем выделение у всех ценовых карточек
+                    document.querySelectorAll('.price-option').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    
+                    // Выделяем выбранную
+                    this.classList.add('selected');
+                });
+            });
+            
+            // Для ползунка цены
+            const priceRange = document.getElementById('priceRange');
+            priceRange.addEventListener('input', function() {
+                const price = parseInt(this.value);
+                updatePriceValue(price);
+                selection.price_max = price;
+                
+                // Убираем выделение с карточек
+                document.querySelectorAll('.price-option').forEach(c => {
+                    c.classList.remove('selected');
+                });
+            });
+        }
+        
+        function updatePriceValue(price) {
+            document.getElementById('priceValue').textContent = price.toLocaleString('ru-RU');
+        }
+        
+        // Навигация по шагам
+        function nextStep(step) {
+            // Проверяем, выбран ли параметр на текущем шаге
+            if (step > 1) {
+                let isValid = false;
+                
+                if (currentStep === 1 && selection.moto_type) {
+                    isValid = true;
+                } else if (currentStep === 2 && selection.engine_size_option) {
+                    isValid = true;
+                } else if (currentStep === 3 && selection.price_max) {
+                    isValid = true;
+                } else if (currentStep === 4 && selection.year_option) {
+                    isValid = true;
+                } else if (currentStep === 5 && selection.mileage_option) {
+                    isValid = true;
+                }
+                
+                if (!isValid) {
+                    alert('Пожалуйста, выберите вариант перед продолжением');
+                    return;
+                }
+            }
+            
+            // Скрываем текущий шаг
+            document.getElementById(`step${currentStep}`).style.display = 'none';
+            document.getElementById(`step${currentStep}-indicator`).classList.remove('active');
+            
+            // Показываем следующий шаг
+            document.getElementById(`step${step}`).style.display = 'block';
+            document.getElementById(`step${step}-indicator`).classList.add('active');
+            
+            // Отмечаем предыдущий шаг как завершенный
+            if (step > 1) {
+                document.getElementById(`step${step-1}-indicator`).classList.add('completed');
+            }
+            
+            currentStep = step;
+        }
+        
+        function prevStep(step) {
+            // Скрываем текущий шаг
+            document.getElementById(`step${currentStep}`).style.display = 'none';
+            document.getElementById(`step${currentStep}-indicator`).classList.remove('active');
+            
+            // Показываем предыдущий шаг
+            document.getElementById(`step${step}`).style.display = 'block';
+            document.getElementById(`step${step}-indicator`).classList.add('active');
+            
+            // Убираем отметку о завершении
+            document.getElementById(`step${currentStep}-indicator`).classList.remove('completed');
+            
+            currentStep = step;
+        }
+        
+        // Отправка запроса на бекенд
+async function submitSelection() {
+    // Проверяем последний шаг
+    if (!selection.mileage_option) {
+        alert('Пожалуйста, выберите вариант пробега');
+        return;
+    }
+
+    // Показываем спиннер загрузки
+    document.getElementById('selection-form').style.display = 'none';
+    document.getElementById('loadingSpinner').style.display = 'block';
+
+    // Форматируем параметры для отправки (строго под твой DTO)
+    const params = {
+        moto_type: selection.moto_type || "",
+
+        // если вдруг что-то не выбрано — шлём 0 (означает "любой")
+        engine_size_option: Number(selection.engine_size_option) || 0,
+        year_option: Number(selection.year_option) || 0,
+        mileage_option: Number(selection.mileage_option) || 0,
+
+        // цена: либо число, либо null → на бэке PriceMax *int64
+        price_max: selection.price_max
+            ? Number(selection.price_max)
+            : null
+    };
+
+    try {
+        // Твой Go-сервер — обычный HTTP
+        const backendUrl = 'http://localhost:8080/api/v1/motos/getByFilter';
+
+        const response = await fetch(backendUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(params),
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка сервера');
+        }
+
+        // Ожидаем { motos: [...] }
+        const data = await response.json();
+        const motorcycles = Array.isArray(data.motos) ? data.motos : [];
+
+        // Показываем результаты (теперь реальные данные с бэка)
+        displayResults(motorcycles, params);
+
+    } catch (error) {
+        console.error('Ошибка:', error);
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('selection-form').style.display = 'block';
+        alert('Произошла ошибка при поиске мотоциклов. Пожалуйста, попробуйте еще раз.');
+        return;
+    }
+}
+        
+        // Отображение результатов
+        function displayResults(motorcycles, params) {
+            console.log(params);
+            // Скрываем спиннер
+            document.getElementById('loadingSpinner').style.display = 'none';
+            
+            // Показываем контейнер с результатами
+            document.getElementById('resultsContainer').style.display = 'block';
+            
+            // Отображаем выбранные параметры
+            const paramsHtml = `
+                <strong>Выбранные параметры:</strong><br>
+                Тип: ${params.moto_type} | 
+                Объем: ${params.engine_size_option} | 
+                Бюджет: до ${params.price_max.toLocaleString('ru-RU')} ₽ | 
+                Год: ${params.year_option} | 
+                Пробег: ${params.mileage_option}
+            `;
+            document.getElementById('selectedParams').innerHTML = paramsHtml;
+            
+            // Отображаем количество найденных мотоциклов
+            document.getElementById('resultsCount').textContent = `Найдено ${motorcycles.length} мотоциклов`;
+            
+            // Отображаем мотоциклы
+            const resultsContainer = document.getElementById('motoResults');
+            
+            if (motorcycles.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-warning text-center">
+                        <h4><i class="bi bi-exclamation-triangle me-2"></i>Ничего не найдено</h4>
+                        <p>Попробуйте изменить параметры поиска</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let resultsHtml = '<div class="row">';
+            
+            motorcycles.forEach(moto => {
+                resultsHtml += `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="moto-card h-100">
+                            <div class="moto-card-header">
+                                <h5 class="mb-0">${moto.Name}</h5>
+                                <div class="moto-card-price">${moto.Price.toLocaleString('ru-RU')} ₽</div>
+                            </div>
+                            <div class="p-3">
+                                <div class="moto-card-detail">
+                                    <i class="bi bi-calendar"></i> <strong>Год:</strong> ${moto.Year}
+                                </div>
+                                <div class="moto-card-detail">
+                                    <i class="bi bi-speedometer"></i> <strong>Пробег:</strong> ${moto.Mileage.toLocaleString('ru-RU')} км
+                                </div>
+                                <div class="moto-card-detail">
+                                    <i class="bi bi-gear"></i> <strong>Объем:</strong> ${moto.EngineSize}cc
+                                </div>
+                                <div class="moto-card-detail">
+                                    <i class="bi bi-tag"></i> <strong>Тип:</strong> ${moto.MotoType}
+                                </div>
+                                <div class="moto-card-detail">
+                                    <i class="bi bi-geo-alt"></i> <strong>Место:</strong> ${moto.Location}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsHtml += '</div>';
+            resultsContainer.innerHTML = resultsHtml;
+        }
+        
+        // Начать подбор заново
+        function restartSelection() {
+            // Сбрасываем выбор
+            selection.motoType = null;
+            selection.engineSize = null;
+            selection.maxPrice = 500000;
+            selection.year = null;
+            selection.mileage = null;
+            
+            // Сбрасываем UI
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active', 'completed');
+            });
+            
+            document.getElementById('step1-indicator').classList.add('active');
+            
+            // Сбрасываем ползунок цены
+            document.getElementById('priceRange').value = 500000;
+            updatePriceValue(500000);
+            
+            // Показываем первый шаг
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('selection-form').style.display = 'block';
+            
+            // Скрываем все шаги кроме первого
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`step${i}`).style.display = i === 1 ? 'block' : 'none';
+            }
+            
+            currentStep = 1;
+        }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            initOptionSelection();
+            updatePriceValue(500000);
+        });
+    </script>
+    
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
